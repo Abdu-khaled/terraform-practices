@@ -50,6 +50,10 @@ resource "aws_nat_gateway" "this" {
   tags = {
     Name        = "nat-gateway"
   }
+  
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 

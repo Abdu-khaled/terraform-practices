@@ -431,3 +431,29 @@ terraform destroy \
 
 ---
 ## 6. Arch1: Prevent NAT Gateway deletion – Research and implement a method to *prevent the NAT Gateway from being deleted* even when running terraform destroy.
+
+
+### Use Terraform’s lifecycle meta-arg
+
+```bash
+resource "aws_nat_gateway" "this" {
+  allocation_id = aws_eip.nat.id
+  subnet_id     = aws_subnet.public.id
+  depends_on    = [aws_internet_gateway.this]
+
+  tags = {
+    Name        = "nat-gateway"
+  }
+  
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+```
+
+*Effect: any terraform destroy (or targeted destroy) that includes this resource will fail with a clear error, keeping the NAT Gateway safe. To remove it in the future, you must first delete or comment this block and re-apply, or explicitly acknowledge by changing code (that’s the whole point of protection).*
+
+- Practical workflow: keep prevent_destroy = true during normal ops; if you truly want to remove the NAT, temporarily set it to false, apply, then destroy.
+
+
+![](./screenshot/24.png)
