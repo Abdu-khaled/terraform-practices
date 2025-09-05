@@ -354,3 +354,50 @@ terraform apply -var-file="terraform.tfvars" -auto-approve
 **Security Group**
 ![](./screenshot/15.png)
 
+---
+## 4. Collaborate with your teammate: Since your teammate will contribute to *Arch2,* find the proper way to *share the state file* and implement it.
+
+
+### 4.1. Create an S3 bucket
+
+```bash
+aws s3api create-bucket \                                   
+  --bucket tfstate-abdu \          
+  --region eu-central-1 \
+  --create-bucket-configuration LocationConstraint=eu-central-1
+```
+![](./screenshot/20.png)
+
+### 4.2. Create a DynamoDB table
+```bash
+aws dynamodb create-table \                                                            
+  --table-name terraform-locks \
+  --attribute-definitions AttributeName=LockID,AttributeType=S \
+  --key-schema AttributeName=LockID,KeyType=HASH \
+  --billing-mode PAY_PER_REQUEST \
+  --region eu-central-1
+```
+
+![](./screenshot/22.png)
+
+### 4.3. backend config
+
+```bash
+terraform {
+  backend "s3" {
+    bucket         = "tfstate-abdu"
+    key            = "arch2/terraform.tfstate" 
+    region         = "eu-central-1"
+    dynamodb_table = "terraform-locks"
+    encrypt        = true
+  }
+}
+```
+![](./screenshot/21.png)
+
+### 4.4. Test
+
+![](./screenshot/23.png)
+
+---
+
