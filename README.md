@@ -107,3 +107,37 @@ terraform apply -var-file="terraform.tfvars" -auto-approve
 ![](./screenshot/09.png)
 ![](./screenshot/10.png)
 
+---
+
+## 2. Research Terraform modules and explore how they can be used for better reusability and maintainability.
+*A Terraform module is a collection of standard configuration files in a dedicated directory. Terraform modules encapsulate groups of resources dedicated to one task, reducing the amount of code you have to develop for similar infrastructure components.*
+
+*Some say that Terraform modules are a way of extending your present Terraform configuration with existing parts of reusable code reducing the amount of code you have to develop for similar infrastructure components. Others say that the Terraform module definition is a single or many .tf files stacked together in their own directory. Both are correct.*
+
+*Module blocks can also be used to force compliance on other resources—to deploy databases with encrypted disks, for example. By hard-coding the encryption configuration and not exposing it through variables, you’re making sure that every time the module is used, the disks are going to be encrypted.*
+
+
+**Why modules?**
+
+- Encapsulate a set of resources (VPC, EC2, autoscaling group, database) into reusable building blocks.
+
+- Promote DRY, enforce consistent patterns and outputs/inputs.
+
+- Allow versioning and sharing (Terraform Registry or private module repo).
+
+
+**Best practices**
+
+- Keep modules small and single-responsibility.
+
+- Use clear input variables and outputs.
+
+- Use README.md in module to document required vars, outputs, and examples.
+
+- Version modules and pin source with a tag (if using remote registry or git).
+
+- Use terraform fmt, validate, and unit tests where possible.
+
+
+
+---
