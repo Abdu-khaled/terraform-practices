@@ -401,3 +401,33 @@ terraform {
 
 ---
 
+## 5. . Destroy Arch1 using only the Terraform command (terraform destroy) *without deleting the EC2 instance*. You are not allowed to edit any Terraform files.
+
+### 5.1. List addresses you plan to target
+
+```bash
+terraform state list
+```
+
+### 5.2. Destroy Arch1 But Keep EC2
+
+```bash
+terraform destroy \
+  -target=aws_eip.nat \
+  -target=aws_internet_gateway.this \
+  -target=aws_nat_gateway.this \
+  -target=aws_route.private_nat \
+  -target=aws_route.public_inet \
+  -target=aws_route_table.private \
+  -target=aws_route_table.public \
+  -target=aws_route_table_association.private_assoc \
+  -target=aws_route_table_association.public_assoc \
+  -target=aws_security_group.web \
+  -target=aws_subnet.private \
+  -target=aws_subnet.public \
+  -target=aws_vpc.vpc
+```
+*This sequence leaves aws_instance.app intact. If a dependency prevents destroying a parent (e.g., VPC while the instance still exists), that’s expected—stop once you’ve removed everything you can around the instance.*
+
+---
+## 6. Arch1: Prevent NAT Gateway deletion – Research and implement a method to *prevent the NAT Gateway from being deleted* even when running terraform destroy.
