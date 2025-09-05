@@ -138,6 +138,5 @@ terraform apply -var-file="terraform.tfvars" -auto-approve
 
 - Use terraform fmt, validate, and unit tests where possible.
 
-
-
 ---
+
