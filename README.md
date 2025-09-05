@@ -140,3 +140,217 @@ terraform apply -var-file="terraform.tfvars" -auto-approve
 
 ---
 
+## 3. Using a module, create *Arch2* and install *Nginx* on the machine using Terraform.
+
+### Module: modules/ec2-nginx/
+- **main.tf**
+
+  ```bash
+  resource "aws_instance" "this" {
+    ami                    = var.ami_id
+    instance_type          = var.instance_type
+    subnet_id              = var.subnet_id
+    vpc_security_group_ids = var.sg_ids
+    key_name               = var.key_name
+
+    user_data = <<-EOF
+      #!/bin/bash
+      set -e
+      yum update -y
+      amazon-linux-extras enable nginx1
+      yum install -y nginx
+      systemctl enable --now nginx
+      echo "<h1>Arch2 via module — Nginx is running</h1>" > /usr/share/nginx/html/index.html
+    EOF
+
+    tags = {
+      Name = var.name
+    }
+  }
+
+  ```
+
+- **variables.tf**
+  ```bash
+  variable "subnet_id" {
+    type        = string
+    description = "Subnet ID to launch the EC2 instance into"
+  }
+
+  variable "sg_ids" {
+    type        = list(string)
+    description = "List of security group IDs to attach"
+  }
+
+  variable "instance_type" {
+    type        = string
+    description = "EC2 instance type"
+  }
+
+  variable "key_name" {
+    type        = string
+    description = "AWS key pair name for SSH access"
+  }
+
+  variable "ami_id" {
+    type        = string
+    description = "AMI ID for the instance (Amazon Linux 2 recommended)"
+  }
+
+  variable "name" {
+    type        = string
+    description = "Name tag for the EC2 instance"
+  }
+  ```
+
+- **outputs.tf**
+  ```bash
+  output "instance_id" {
+    description = "ID of the EC2 instance"
+    value       = aws_instance.this.id
+  }
+
+  output "public_ip" {
+    description = "Public IP of the EC2 instance"
+    value       = aws_instance.this.public_ip
+  }
+  ```
+
+### Architecture 2 (Arch2, with module) 
+
+- **arch2/network.tf**
+  ```bash
+  resource "aws_vpc" "main" {
+    cidr_block = var.vpc_cidr
+    
+    tags = {
+      Name = "arch2-vpc"
+    }
+  }
+
+
+  # Internet_gateway
+  resource "aws_internet_gateway" "this" { vpc_id = aws_vpc.main.id }
+
+  # Public Subnet
+  resource "aws_subnet" "public" {
+    vpc_id     = aws_vpc.main.id
+    cidr_block = var.public_subnet_cidr
+
+    map_public_ip_on_launch = true
+    
+    tags = {
+      Name = "public-subnet"
+      Tier = "public"
+    }
+  }
+
+  # Public Route Table
+  resource "aws_route_table" "public" {
+    vpc_id = aws_vpc.main.id
+
+    tags = {
+      Name        = "public-route-table"
+    }
+  }
+
+  resource "aws_route" "public_inet" {
+    route_table_id         = aws_route_table.public.id
+    destination_cidr_block = "0.0.0.0/0"
+    gateway_id             = aws_internet_gateway.this.id
+  }
+
+  resource "aws_route_table_association" "public_assoc" {
+    route_table_id = aws_route_table.public.id
+    subnet_id      = aws_subnet.public.id
+  }
+
+  # Security Group
+  resource "aws_security_group" "web" {
+    name_prefix = "arch2-web"
+    vpc_id      = aws_vpc.main.id
+
+    ingress {
+      from_port   = 80
+      to_port     = 80
+      protocol    = "tcp"
+      cidr_blocks = ["0.0.0.0/0"]
+    }
+
+    ingress {
+      from_port   = 22
+      to_port     = 22
+      protocol    = "tcp"
+      cidr_blocks = ["0.0.0.0/0"]
+    }
+
+    egress {
+      from_port   = 0
+      to_port     = 0
+      protocol    = "-1"
+      cidr_blocks = ["0.0.0.0/0"]
+    }
+  }
+  ```
+- **arch2/nginx.tf**
+
+  ```bash
+  data "aws_ami" "al2" {
+    most_recent = true
+    owners      = ["amazon"]
+
+    filter {
+      name   = "name"
+      values = ["amzn2-ami-hvm-*-x86_64-gp2"]
+    }
+  }
+
+  module "ec2_nginx" {
+    source        = "../modules/ec2-nginx"
+    name          = "arch2-nginx"
+    subnet_id     = aws_subnet.public.id
+    sg_ids        = [aws_security_group.web.id]
+    instance_type = var.instance_type
+    key_name      = var.key_name
+    ami_id        = data.aws_ami.al2.id
+  }
+  ```
+**Run:**
+```bash
+cd arch2
+terraform init
+terraform apply -var-file="terraform.tfvars" -auto-approve
+```
+
+### Verification Command
+
+#### 1. terraform init
+![](./screenshot/11.png)
+
+ #### 2. terraform apply -var-file="terraform.tfvars" -auto-approve
+
+![](./screenshot/12.png)
+
+### Verification in AWS
+
+**EC2 instance (nginx)**
+![](./screenshot/14.png)
+![](./screenshot/13.png)
+
+
+**Network (VPC, Public subnets, Internet Gateway)**
+![](./screenshot/16.png)
+
+**Public subnets**
+![](./screenshot/17.png)
+
+**Route tables**
+![](./screenshot/18.png)
+
+**Internet Gateway**
+![](./screenshot/19.png)
+
+
+**Security Group**
+![](./screenshot/15.png)
+
