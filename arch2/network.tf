@@ -24,9 +24,6 @@ resource "aws_subnet" "public" {
   }
 }
 
-
-
-
 # Public Route Table
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.main.id
@@ -46,9 +43,6 @@ resource "aws_route_table_association" "public_assoc" {
   route_table_id = aws_route_table.public.id
   subnet_id      = aws_subnet.public.id
 }
-
-
-
 
 # Security Group
 resource "aws_security_group" "web" {

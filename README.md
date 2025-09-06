@@ -1,7 +1,8 @@
-# Terraform Task 6 – Solution
+# Terraform Practices Task 6 
 
 ## 📌 Overview
 This repository contains my solution to Task 6.  
+**Check out my repo here: [GitHub - Abdu-khaled/terraform-practices](https://github.com/Abdu-khaled/terraform-practices.git)**
 
 
 ## 1️Create Arch1
@@ -219,7 +220,7 @@ terraform apply -var-file="terraform.tfvars" -auto-approve
 ### Architecture 2 (Arch2, with module) 
 
 - **arch2/network.tf**
-  ```bash
+```bash
   resource "aws_vpc" "main" {
     cidr_block = var.vpc_cidr
     
@@ -231,6 +232,7 @@ terraform apply -var-file="terraform.tfvars" -auto-approve
 
   # Internet_gateway
   resource "aws_internet_gateway" "this" { vpc_id = aws_vpc.main.id }
+
 
   # Public Subnet
   resource "aws_subnet" "public" {
@@ -401,7 +403,7 @@ terraform {
 
 ---
 
-## 5. . Destroy Arch1 using only the Terraform command (terraform destroy) *without deleting the EC2 instance*. You are not allowed to edit any Terraform files.
+## 5. Destroy Arch1 using only the Terraform command (terraform destroy) *without deleting the EC2 instance*. You are not allowed to edit any Terraform files.
 
 ### 5.1. List addresses you plan to target
 
@@ -425,7 +427,6 @@ terraform destroy \
   -target=aws_security_group.web \
   -target=aws_subnet.private \
   -target=aws_subnet.public \
-  -target=aws_vpc.vpc
 ```
 *This sequence leaves aws_instance.app intact. If a dependency prevents destroying a parent (e.g., VPC while the instance still exists), that’s expected—stop once you’ve removed everything you can around the instance.*
 
